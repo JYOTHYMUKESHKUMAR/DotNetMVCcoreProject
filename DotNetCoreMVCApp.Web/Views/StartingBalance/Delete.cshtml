@@ -1,0 +1,44 @@
+﻿@model DotNetCoreMVCApp.Models.Web.StartingBalanceViewModel
+@{
+    ViewData["Title"] = "Delete Starting Balance";
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Delete Starting Balance</h1>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card card-danger">
+                    <div class="card-header">
+                        <h3 class="card-title">Are you sure you want to delete this?</h3>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row">
+                            <dt class="col-sm-4">Starting Date</dt>
+                            <dd class="col-sm-8">@Model.StartingDate.ToShortDateString()</dd>
+
+                            <dt class="col-sm-4">Available Balance</dt>
+                            <dd class="col-sm-8">@Model.AvailableBalance.ToString("C")</dd>
+                        </dl>
+                    </div>
+                    <div class="card-footer">
+                        <form asp-action="Delete">
+                            <input type="hidden" asp-for="Id" />
+                            <input type="submit" value="Delete" class="btn btn-danger" />
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

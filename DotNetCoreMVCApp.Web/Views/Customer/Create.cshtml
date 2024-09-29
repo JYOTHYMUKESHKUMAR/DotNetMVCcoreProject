@@ -1,0 +1,176 @@
+﻿@model DotNetCoreMVCApp.Models.Web.CustomerViewModel
+
+@{
+    ViewData["Title"] = "Add Customer";
+}
+
+<div class="modal fade" id="contactModal" tabindex="-1" role="dialog" aria-labelledby="contactModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="contactModalLabel">Create Customer Contact</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="ContactName">Contact Name</label>
+                    <input id="ContactName" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="Designation">Designation</label>
+                    <input id="Designation" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="Mobile">Mobile</label>
+                    <input id="Mobile" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="Email">Email</label>
+                    <input id="Email" class="form-control" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="addContact">Add Contact</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Add New Customer</h1>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card card-secondary">
+                    <div class="card-header">
+                        <h3 class="card-title">Enter Customer details</h3>
+                    </div>
+                    <form id="customerForm">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="Id">Customer ID</label>
+                                <input type="text" id="Id" name="Id" class="form-control" placeholder="Enter Customer ID" />
+                            </div>
+                            <div class="form-group">
+                                <label for="Name">Name</label>
+                                <input type="text" id="Name" name="Name" class="form-control" placeholder="Enter Customer name" />
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#contactModal">
+                            Add Contact
+                        </button>
+
+                        <table class="table table-bordered mt-3" id="contactsTable">
+                            <thead>
+                                <tr>
+                                    <th>Contact Name</th>
+                                    <th>Designation</th>
+                                    <th>Mobile</th>
+                                    <th>Email</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Rows will be added here dynamically -->
+                            </tbody>
+                        </table>
+
+                        <div class="card-footer">
+                            <button type="button" id="saveCustomer" class="btn btn-secondary">Submit</button>
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            $('#addContact').click(function () {
+                var contactName = $('#ContactName').val();
+                var designation = $('#Designation').val();
+                var mobile = $('#Mobile').val();
+                var email = $('#Email').val();
+
+                var newRow = `
+                            <tr>
+                                <td>${contactName}</td>
+                                <td>${designation}</td>
+                                <td>${mobile}</td>
+                                <td>${email}</td>
+                                <td>
+                                    <button type="button" class="btn btn-danger btn-sm removeRow">Remove</button>
+                                    <button type="button" class="btn btn-primary btn-sm editRow">Edit</button>
+                                </td>
+                            </tr>
+                        `;
+
+                $('#contactsTable tbody').append(newRow);
+                $('#contactModal').modal('hide');
+
+                // Clear the form
+                $('#ContactName, #Designation, #Mobile, #Email').val('');
+            });
+
+            $('#contactsTable').on('click', '.removeRow', function () {
+                $(this).closest('tr').remove();
+            });
+
+            function gatherContactData() {
+                let contacts = [];
+                $('#contactsTable tbody tr').each(function () {
+                    let contact = {
+                        ContactName: $(this).find('td:eq(0)').text(),
+                        Designation: $(this).find('td:eq(1)').text(),
+                        Mobile: $(this).find('td:eq(2)').text(),
+                        Email: $(this).find('td:eq(3)').text()
+                    };
+                    contacts.push(contact);
+                });
+                return contacts;
+            }
+
+            $('#saveCustomer').click(function () {
+                let customerData = {
+                    Id: $('#Id').val(),
+                    Name: $('#Name').val(),
+                    CustomerContacts: gatherContactData()
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/Customer/Create',
+                    data: JSON.stringify(customerData),
+                    contentType: 'application/json; charset=utf-8',
+                    success: function (response) {
+                        alert('Customer saved successfully');
+                        window.location.href = '/Customer/Index';
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error saving customer:', xhr.responseText);
+                        alert('Error saving customer. Please check the console for details.');
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,106 @@
+﻿@model DotNetCoreMVCApp.Models.Web.CustomerViewModel
+
+@{
+    ViewData["Title"] = "Edit Customer";
+}
+
+<h1>Edit Customer</h1>
+
+<form asp-action="Edit">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" asp-for="Id" />
+    <div class="form-group">
+        <label asp-for="Name" class="control-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <h3>Contacts</h3>
+    <div id="contacts">
+        @for (int i = 0; i < Model.CustomerContacts.Count; i++)
+        {
+            <div class="contact-form">
+                <input type="hidden" asp-for="CustomerContacts[i].ContactId" />
+                <input type="hidden" asp-for="CustomerContacts[i].IsDeleted" class="is-deleted" />
+                <div class="form-group">
+                    <label asp-for="CustomerContacts[i].ContactName" class="control-label"></label>
+                    <input asp-for="CustomerContacts[i].ContactName" class="form-control" />
+                    <span asp-validation-for="CustomerContacts[i].ContactName" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="CustomerContacts[i].Designation" class="control-label"></label>
+                    <input asp-for="CustomerContacts[i].Designation" class="form-control" />
+                    <span asp-validation-for="CustomerContacts[i].Designation" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="CustomerContacts[i].Mobile" class="control-label"></label>
+                    <input asp-for="CustomerContacts[i].Mobile" class="form-control" />
+                    <span asp-validation-for="CustomerContacts[i].Mobile" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="CustomerContacts[i].Email" class="control-label"></label>
+                    <input asp-for="CustomerContacts[i].Email" class="form-control" />
+                    <span asp-validation-for="CustomerContacts[i].Email" class="text-danger"></span>
+                </div>
+                <button type="button" class="btn btn-danger remove-contact">Remove Contact</button>
+            </div>
+        }
+    </div>
+    <button type="button" id="add-contact" class="btn btn-primary">Add Contact</button>
+
+    <div class="form-group">
+        <input type="submit" value="Save" class="btn btn-primary" />
+    </div>
+</form>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            $("#add-contact").click(function () {
+                var contactsCount = $("#contacts .contact-form").length;
+                var newContact = `
+                            <div class="contact-form">
+                                <input type="hidden" name="CustomerContacts[${contactsCount}].ContactId" value="0" />
+                                <input type="hidden" name="CustomerContacts[${contactsCount}].IsDeleted" value="false" class="is-deleted" />
+                                <div class="form-group">
+                                    <label class="control-label">Contact Name</label>
+                                    <input name="CustomerContacts[${contactsCount}].ContactName" class="form-control" />
+                                    <span class="text-danger field-validation-valid" data-valmsg-for="CustomerContacts[${contactsCount}].ContactName" data-valmsg-replace="true"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label">Designation</label>
+                                    <input name="CustomerContacts[${contactsCount}].Designation" class="form-control" />
+                                    <span class="text-danger field-validation-valid" data-valmsg-for="CustomerContacts[${contactsCount}].Designation" data-valmsg-replace="true"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label">Mobile</label>
+                                    <input name="CustomerContacts[${contactsCount}].Mobile" class="form-control" />
+                                    <span class="text-danger field-validation-valid" data-valmsg-for="CustomerContacts[${contactsCount}].Mobile" data-valmsg-replace="true"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label">Email</label>
+                                    <input name="CustomerContacts[${contactsCount}].Email" class="form-control" />
+                                    <span class="text-danger field-validation-valid" data-valmsg-for="CustomerContacts[${contactsCount}].Email" data-valmsg-replace="true"></span>
+                                </div>
+                                <button type="button" class="btn btn-danger remove-contact">Remove Contact</button>
+                            </div>
+                        `;
+                $("#contacts").append(newContact);
+            });
+
+            $(document).on("click", ".remove-contact", function () {
+                var contactForm = $(this).closest(".contact-form");
+                contactForm.find(".is-deleted").val("true");
+                contactForm.hide();
+            });
+        });
+    </script>
+}

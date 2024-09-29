@@ -1,0 +1,17 @@
+﻿@{
+    ViewData["Title"] = "Export CashIn Data";
+}
+
+<h2>Export CashIn Data</h2>
+
+<form asp-action="ExportData" method="post">
+    <div class="form-group">
+        <label for="format">Select Export Format:</label>
+        <select id="format" name="format" class="form-control">
+            <option value="excel">Excel</option>
+            <option value="pdf">PDF</option>
+            <option value="csv">CSV</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Export</button>
+</form>

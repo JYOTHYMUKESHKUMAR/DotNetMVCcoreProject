@@ -1,0 +1,161 @@
+﻿@using DotNetCoreMVCApp.Extensions
+@model IEnumerable<DotNetCoreMVCApp.Models.Entities.ProjectCashFlowSummary>
+
+@{
+    ViewData["Title"] = "Project Cash Flow Summary";
+}
+<link href="~/datatables/css/jquery.dataTables.css" rel="stylesheet" />
+<link href="~/datatables/css/jquery.dataTables.min.css" rel="stylesheet" />
+<style>
+    .report-header {
+        background-color: lightsteelblue;
+        padding: 15px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .report-title {
+        color: #ff6600;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    #projectCashFlowTable th {
+        background-color: lightsteelblue;
+    }
+
+    .highlight-today {
+        background-color: #FFFF00 !important; /* Yellow highlight */
+    }
+</style>
+<div class="container-fluid">
+    <div class="card-header">
+
+        <a asp-action="Export" class="btn btn-primary">Export</a>
+    </div>
+</div>
+<div class="card-header">
+    <form asp-action="Index" method="get" id="filterForm">
+        <div class="form-row">
+            <div class="form-group col-md-3">
+                <label for="projectName">Project:</label>
+                <select id="projectName" name="projectName" class="form-control">
+                    <option value="">All Projects</option>
+                    @foreach (var project in ViewBag.Projects)
+                    {
+                        <option value="@project" selected="@(project == ViewBag.ProjectName)">@project</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group col-md-3">
+                <label for="startDate">Start Date:</label>
+                <input type="date" id="startDate" name="startDate" value="@ViewBag.StartDate" class="form-control" />
+            </div>
+            <div class="form-group col-md-3">
+                <label for="endDate">End Date:</label>
+                <input type="date" id="endDate" name="endDate" value="@ViewBag.EndDate" class="form-control" />
+            </div>
+            <div class="form-group col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary mr-2">Apply Filter</button>
+                <button type="button" id="clearFilter" class="btn btn-secondary">Clear Filter</button>
+            </div>
+        </div>
+    </form>
+</div>
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-12">
+                <div class="report-header">
+                    <h1 class="report-title">CashFlow Management Project Summary Report</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <table id="projectCashFlowTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Project</th>
+                                    <th>Date</th>
+                                    <th>Cash In</th>
+                                    <th>Cash Out</th>
+                                    <th>Balance</th>
+                                    <th>Status</th>
+                                    <th>Delayed Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>@item.Project</td>
+                                        <td>@item.Date.ToString("MMM dd, yyyy")</td>
+                                        <td>@item.CashIn.ToFormattedString()</td>
+                                        <td>@item.CashOut.ToFormattedString()</td>
+                                        <td>@((item.CashIn - item.CashOut).ToFormattedString())</td>
+                                        <td>@item.Status</td>
+                                        <td>@(item.DelayedDate?.ToString("MMM dd, yyyy") ?? "N/A")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+@section Scripts {
+    <script src="~/datatables/js/jquery.dataTables.js"></script>
+    <script src="~/datatables/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var today = new Date().toISOString().split('T')[0];
+
+            $('#projectCashFlowTable').DataTable({
+                "paging": true,
+                "lengthChange": true,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+                "language": {
+                    "emptyTable": "No data available"
+                },
+                "lengthMenu": [[50, 10, 25, 100, -1], [50, 10, 25, 100, "All"]],
+                "pageLength": 50,
+                "order": [[1, "desc"]], // Order by the second column (Date) in descending order
+                "columnDefs": [
+                    {
+                        "targets": 1, // Target the second column (Date)
+                        "type": "date" // Specify the type as date
+                    }
+                ],
+                "createdRow": function (row, data, dataIndex) {
+                    // Check if the date in the second column matches today's date
+                    if (data[1] === today) {
+                        $(row).addClass('highlight-today');
+                    }
+                }
+            });
+
+            $('#clearFilter').click(function (e) {
+                e.preventDefault();
+                $('#projectName').val('');
+                $('#startDate, #endDate').val('');
+                $('#filterForm').submit();
+            });
+        });
+    </script>
+}

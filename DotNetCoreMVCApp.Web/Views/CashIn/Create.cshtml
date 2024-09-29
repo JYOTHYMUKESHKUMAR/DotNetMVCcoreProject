@@ -1,0 +1,284 @@
+﻿@model DotNetCoreMVCApp.Models.Web.CashInCreateViewModel
+
+@{
+    ViewData["Title"] = "Add CashIn";
+}
+
+<div class="modal fade" id="installmentModal" tabindex="-1" role="dialog" aria-labelledby="installmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="installmentModalLabel">Create installment details</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="NumberOfInstallment">Number of Installment</label>
+                    <select id="NumberOfInstallment" class="form-control">
+                        <option value="1" selected>1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="Amount">Amount</label>
+                    <input id="Amount" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="DueDate">Due Date</label>
+                    <input id="DueDate" type="date" class="form-control" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="addInstallment">Add Installment</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Add New CashIn</h1>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card card-secondary">
+                    <div class="card-header">
+                        <h3 class="card-title">Enter CashIn details</h3>
+                    </div>
+                    <form id="cashInForm">
+                        <div class="card-body">
+
+                            <div class="form-group">
+                                <label asp-for="CustomerName">Customer Name</label>
+                                @* <input asp-for="CustomerName"  type="text" class="form-control" placeholder="Enter Customer Name" /> *@
+                                <select asp-for="CustomerId" asp-items="@Model.Customerlist" class="form-control">
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="AmountDue">Amount Due</label>
+                                <input asp-for="AmountDue" class="form-control" />
+                                <span asp-validation-for="AmountDue" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Date">Date</label>
+                                <input asp-for="Date" class="form-control" />
+                                <span asp-validation-for="Date" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Status">Status</label>
+                                <select asp-for="Status" class="form-control">
+                                    <option value="">Select Status</option>
+                                    @foreach (var status in Enum.GetValues(typeof(DotNetCoreMVCApp.Models.Web.CashInStatus)))
+                                    {
+                                        <option value="@status">@status</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="Status" class="text-danger"></span>
+                            </div>
+                            <div class="form-group" id="delayedDateGroup" style="display: none;">
+                                <label asp-for="DelayedDate">Delayed Date</label>
+                                <input asp-for="DelayedDate" type="date" class="form-control" />
+                                <span asp-validation-for="DelayedDate" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="ProjectId">Project</label>
+                                <select asp-for="ProjectId" asp-items="@Model.ProjectDatabaselist" class="form-control">
+                                </select>
+                                @* <input asp-for="Project" type="text" class="form-control" placeholder="Enter Customer Name" /> *@
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="CostCenter">Cost Center</label>
+                                <select asp-for="CostCenter" class="form-control">
+                                    <option value="">Select Cost Center</option>
+                                    @foreach (var center in Enum.GetValues(typeof(DotNetCoreMVCApp.Models.Web.CashInCostCenter)))
+                                    {
+                                        <option value="@center">@center</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="CostCenter" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Remark">Remark</label>
+                                <textarea asp-for="Remark" class="form-control"></textarea>
+                                <span asp-validation-for="Remark" class="text-danger"></span>
+                            </div>
+                            @* <div class="form-check">
+                            <input asp-for="PayAsInstallment" class="form-check-input" type="checkbox" id="payAsInstallment" />
+                            <label class="form-check-label" for="payAsInstallment">Pay As Installment</label>
+                            </div> *@
+
+                            <table class="table table-bordered mt-3" id="installmentsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Number of Installment</th>
+                                        <th>Amount</th>
+                                        <th>Due Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Rows will be added here dynamically -->
+                                </tbody>
+                            </table>
+
+                            <!-- Add Installment button -->
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#installmentModal">
+                                Add Installment
+                            </button>
+                        </div>
+                        <div class="card-footer">
+                            <button type="button" id="saveCashIn" class="btn btn-primary">Submit</button>
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            function updateStatus() {
+                var amountDue = parseFloat($('#AmountDue').val()) || 0;
+                var totalInstallments = getTotalInstallmentAmount();
+
+                if (amountDue > 0 && totalInstallments === amountDue) {
+                    $('#Status').val('Received').trigger('change');
+                } else if ($('#Status').val() === 'Received') {
+                    $('#Status').val('').trigger('change');
+                }
+            }
+
+            function getTotalInstallmentAmount() {
+                var total = 0;
+                $('#installmentsTable tbody tr').each(function () {
+                    total += parseFloat($(this).find('td:eq(1)').text()) || 0;
+                });
+                return total;
+            }
+
+            $('#Status').change(function () {
+                var selectedStatus = $(this).val();
+                if (selectedStatus === 'Delayed') {
+                    $('#delayedDateGroup').show();
+                } else {
+                    $('#delayedDateGroup').hide();
+                    $('#DelayedDate').val('');
+                }
+            });
+
+            $('#AmountDue').on('input', updateStatus);
+
+            $('#addInstallment').click(function () {
+                var numberOfInstallment = $('#NumberOfInstallment').val();
+                var amount = parseFloat($('#Amount').val());
+                var dueDate = $('#DueDate').val();
+                var amountDue = parseFloat($('#AmountDue').val());
+
+                var currentTotal = getTotalInstallmentAmount();
+                if (currentTotal + amount > amountDue) {
+                    alert('The sum of installments cannot be greater than the amount due. Please adjust the amount.');
+                    return;
+                }
+
+                var newRow = `
+                    <tr>
+                        <td>${numberOfInstallment}</td>
+                        <td>${amount.toFixed(2)}</td>
+                        <td>${dueDate}</td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm removeRow">Remove</button>
+                            <button type="button" class="btn btn-primary btn-sm editRow">Edit</button>
+                        </td>
+                    </tr>
+                `;
+
+                $('#installmentsTable tbody').append(newRow);
+                $('#installmentModal').modal('hide');
+
+                // Clear the form fields after adding installment
+                $('#NumberOfInstallment, #Amount, #DueDate').val('');
+
+                updateStatus();
+            });
+
+            $('#installmentsTable').on('click', '.removeRow', function () {
+                $(this).closest('tr').remove();
+                updateStatus();
+            });
+
+            $('#saveCashIn').click(function () {
+                var selectedStatus = $('#Status').val();
+                var delayedDate = null;
+                if (selectedStatus === 'Delayed') {
+                    delayedDate = $('#DelayedDate').val();
+                }
+
+                var amountDue = parseFloat($('#AmountDue').val());
+                var totalInstallments = getTotalInstallmentAmount();
+
+                if ($('#payAsInstallment').prop('checked') && totalInstallments !== amountDue) {
+                    alert('The sum of installments must equal the amount due. Please adjust the installments.');
+                    return;
+                }
+
+                var cashInData = {
+                    Id: $('#Id').val(),
+                    CustomerId: $('#CustomerId').val(),
+                    AmountDue: amountDue,
+                    Date: $('#Date').val(),
+                    Status: selectedStatus,
+                    DelayedDate: delayedDate,
+                    ProjectId: $('#ProjectId').val(),
+                    CostCenter: $('#CostCenter').val(),
+                    Remark: $('#Remark').val(),
+                    PayAsInstallment: $('#payAsInstallment').prop('checked'),
+                    CashInInstallments: []
+                };
+
+                $('#installmentsTable tbody tr').each(function () {
+                    var installment = {
+                        NumberOfInstallment: $(this).find('td:eq(0)').text(),
+                        Amount: parseFloat($(this).find('td:eq(1)').text()),
+                        DueDate: $(this).find('td:eq(2)').text()
+                    };
+                    cashInData.CashInInstallments.push(installment);
+                });
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/CashIn/Create',
+                    data: JSON.stringify(cashInData),
+                    contentType: 'application/json; charset=utf-8',
+                    success: function (response) {
+                        alert('CashIn saved successfully');
+                        window.location.href = '/CashIn/Index';
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error saving CashIn:', xhr.responseText);
+                        alert('Error saving CashIn. Please check the console for details.');
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,51 @@
+﻿@{
+    ViewData["Title"] = "Import CashOut Data";
+}
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Import CashOut Data</h1>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <h5><i class="icon fas fa-info"></i> Import Instructions</h5>
+                            <p>1. Download and fill out the sample template with your CashOut data.</p>
+                            <p>2. Ensure data is in the correct format (Supplier Name, Amount Due, Date, Status, Project Name, Cost Center, Remark).</p>
+                            <p>3. Upload your completed Excel (.xlsx) or CSV file below.</p>
+                            <a href="@Url.Action("DownloadTemplate", "CashOut")" class="btn btn-success">
+                                <i class="fas fa-file-excel"></i> Download Sample Template
+                            </a>
+                        </div>
+                        <form asp-action="Import" method="post" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label for="file">Select Excel or CSV File:</label>
+                                <input type="file" name="file" id="file" class="form-control-file" accept=".xlsx,.csv" required />
+                            </div>
+                            <button type="submit" class="btn btn-primary">Import</button>
+                        </form>
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div class="alert alert-danger mt-3">
+                                <ul>
+                                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                    {
+                                        <li>@error.ErrorMessage</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

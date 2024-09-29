@@ -1,0 +1,243 @@
+﻿@using DotNetCoreMVCApp.Models.Repository
+@model IEnumerable<CashOut>
+
+@{
+    ViewData["Title"] = "Manage CashOut";
+}
+<link href="~/datatables/css/jquery.dataTables.css" rel="stylesheet" />
+<link href="~/datatables/css/jquery.dataTables.min.css" rel="stylesheet" />
+
+<style>
+    .report-header {
+        background-color: lightsteelblue;
+        padding: 15px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .report-title {
+        color: #ff6600;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    #cashoutTable th {
+        background-color: lightsteelblue;
+    }
+</style>
+<div class="container-fluid">
+    <div class="action-buttons">
+        <a asp-action="Create" class="btn btn-primary">Add New Cash Out</a>
+        <a asp-action="Import" class="btn btn-primary">Import from file</a>
+        <a asp-action="Export" class="btn btn-primary">Export</a>
+    </div>
+</div>
+
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-12">
+                <div class="report-header">
+                    <h1 class="report-title">Cash Management Report: Cash Outflows</h1>
+                </div>
+            </div>
+        </div>
+    </div><!-- /.container-fluid -->
+</section>
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+        <div id="messageContainer" class="alert" style="display: none;"></div>
+
+        @if (TempData["CashOutSuccessMessage"] != null)
+        {
+            <div id="successAlert" class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["CashOutSuccessMessage"]
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <script>
+                setTimeout(function () {
+                    var alert = document.getElementById('successAlert');
+                    if (alert) {
+                        alert.classList.remove('show');
+                        alert.classList.add('fade');
+                        setTimeout(function () {
+                            alert.remove();
+                        }, 150);
+                    }
+                }, 2000);
+            </script>
+        }
+        @if (TempData["CashOutErrorMessage"] != null)
+        {
+            <div class="alert alert-danger">
+                @TempData["CashOutErrorMessage"]
+            </div>
+        }
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <!-- /.card-header -->
+                    <div class="card-body">
+                        <table id="cashoutTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Supplier Name</th>
+                                    <th>Amount Due</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Delayed Date</th>
+                                    <th>Project</th>
+                                    <th>Cost Center</th>
+                                    <th>Remark</th>
+                                    <th>Installment Amounts</th>
+                                    <th>Installment Due Dates</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var cashout in Model)
+                                {
+                                    <tr>
+                                        <td>@cashout.SupplierName</td>
+                                        <td>@cashout.AmountDue.ToString("N2")</td>
+                                        <td>@cashout.Date.ToShortDateString()</td>
+                                        <td>@cashout.Status</td>
+                                        <td>
+                                            @if (cashout.Status == "Delayed")
+                                            {
+                                                @(cashout.DelayedDate?.ToString("MM/dd/yyyy") ?? "Date not set")
+                                            }
+                                            else
+                                            {
+                                                <span>N/A</span>
+                                            }
+                                        </td>
+                                        <td>@(cashout.ProjectName)</td>
+                                        <td>@(cashout.CostCenter ?? "N/A")</td>
+                                        <td>@(cashout.Remark ?? "N/A")</td>
+                                        <td>
+                                            @Html.Raw(string.Join("<br>", cashout.CashOutInstallments.Select(c => c.Amount.ToString("N2"))))
+                                        </td>
+                                        <td>
+                                            @Html.Raw(string.Join("<br>", cashout.CashOutInstallments.Select(c => c.DueDate.ToShortDateString())))
+                                        </td>
+                                        <td>
+                                            <a asp-action="Edit" asp-route-id="@cashout.Id" class="btn btn-sm btn-primary">Edit</a>
+                                            <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#modal-delete" data-item-id="@cashout.Id" data-item-name="@cashout.SupplierName">Delete</button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- /.card-body -->
+                </div>
+                <!-- /.card -->
+            </div>
+        </div>
+    </div>
+
+    <!-- delete modal -->
+    <div class="modal fade" id="modal-delete">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Delete CashOut</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to remove CashOut: <span id="selectedCashOutNameLbl"></span>?</p>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger btn-delete">Delete</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!-- delete modal -->
+</section>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script src="~/datatables/js/jquery.dataTables.js"></script>
+    <script src="~/datatables/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var table = $('#cashoutTable').DataTable({
+                "paging": true,
+                "lengthChange": true,
+                "searching": true,
+                "ordering": true,
+                "order": [[2, "desc"]], // Order by Date column descending
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+                "language": {
+                    "emptyTable": "No data available"
+                },
+                "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                "pageLength": -1,
+                "columnDefs": [
+                    {
+                        "targets": 2, // Target the Date column
+                        "type": "date" // Specify the type as date
+                    }
+                ]
+            });
+
+            $('#modal-delete').on('show.bs.modal', function (e) {
+                var data = $(e.relatedTarget).data();
+                $('#selectedCashOutNameLbl', this).text(data.itemName);
+                $('.btn-delete', this).data('itemId', data.itemId);
+            });
+
+            $('#modal-delete').on('click', '.btn-delete', function (e) {
+                var $modalDiv = $(e.delegateTarget);
+                var id = $(this).data('itemId');
+
+                $.ajax({
+                    url: '/CashOut/Delete/' + id,
+                    type: 'POST',
+                    data: { "__RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() },
+                    success: function (result) {
+                        $('#modal-delete').modal('hide');
+                        if (result.success) {
+                            // Find the row in the DataTable and remove it
+                            table.row($('button[data-item-id="' + id + '"]').closest('tr')).remove().draw();
+
+                            showMessage(result.message, 'success');
+                        } else {
+                            showMessage(result.message, 'danger');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        $('#modal-delete').modal('hide');
+                        showMessage('An error occurred while deleting the CashOut. Please try again.', 'danger');
+                        console.error(xhr.responseText);
+                    }
+                });
+            });
+
+            function showMessage(message, type) {
+                var $messageContainer = $('#messageContainer');
+                $messageContainer.removeClass('alert-success alert-danger').addClass('alert-' + type).text(message).show();
+                setTimeout(function () {
+                    $messageContainer.hide();
+                }, 2000);  // Hide after 2 seconds
+            }
+        });
+    </script>
+}
