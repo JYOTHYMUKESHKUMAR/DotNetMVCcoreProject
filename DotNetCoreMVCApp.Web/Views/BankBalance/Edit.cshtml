@@ -1,0 +1,53 @@
+﻿@model DotNetCoreMVCApp.Models.Web.BankBalanceViewModel
+@{
+    ViewData["Title"] = "Edit Bank Balance";
+}
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Edit Bank Balance</h1>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card card-secondary">
+                    <div class="card-header">
+                        <h3 class="card-title">Edit Bank Balance Details</h3>
+                    </div>
+                    <form asp-action="Edit">
+                        <div class="card-body">
+                            <input type="hidden" asp-for="Id" />
+                            <div class="form-group">
+                                <label asp-for="BankName" class="control-label">Bank or Cash Source</label>
+                                <input asp-for="BankName" class="form-control form-control-sm" />
+                                <span asp-validation-for="BankName" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="CurrentBalance" class="control-label"></label>
+                                <input asp-for="CurrentBalance" class="form-control form-control-sm" />
+                                <span asp-validation-for="CurrentBalance" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <input type="submit" value="Save" class="btn btn-primary btn-sm" />
+                            <a asp-action="Index" class="btn btn-secondary btn-sm">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

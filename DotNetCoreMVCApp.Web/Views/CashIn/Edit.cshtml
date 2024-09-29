@@ -1,0 +1,250 @@
+﻿@model DotNetCoreMVCApp.Models.Web.CashInViewModel
+
+@{
+    ViewData["Title"] = "Edit CashIn";
+}
+
+<h1>Edit CashIn</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+
+            <div class="form-group">
+                <label asp-for="CustomerId" class="control-label">Customer</label>
+                <select asp-for="CustomerId" asp-items="Model.CustomerList" class="form-control">
+                    <option value="">-- Select Customer --</option>
+                </select>
+                <span asp-validation-for="CustomerId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="AmountDue" class="control-label"></label>
+                <input asp-for="AmountDue" class="form-control" />
+                <span asp-validation-for="AmountDue" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Date" class="control-label"></label>
+                <input asp-for="Date" type="date" class="form-control" />
+                <span asp-validation-for="Date" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Status" class="control-label"></label>
+                <select asp-for="Status" asp-items="Model.StatusList" class="form-control"></select>
+                <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="DelayedDate" class="control-label">Delayed Date</label>
+                <input asp-for="DelayedDate" type="date" class="form-control" />
+                <span asp-validation-for="DelayedDate" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ProjectId" class="control-label">Project</label>
+                <select asp-for="ProjectId" asp-items="Model.ProjectDatabaseList" class="form-control">
+                    <option value="">-- Select Project --</option>
+                </select>
+                <span asp-validation-for="ProjectId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="CostCenter" class="control-label"></label>
+                <select asp-for="CostCenter" asp-items="Model.CostCenterList" class="form-control"></select>
+                <span asp-validation-for="CostCenter" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Remark" class="control-label"></label>
+                <textarea asp-for="Remark" class="form-control"></textarea>
+                <span asp-validation-for="Remark" class="text-danger"></span>
+            </div>
+
+            <div id="installmentsSection">
+                <h4>Installments</h4>
+                <table class="table" id="installmentsTable">
+                    <thead>
+                        <tr>
+                            <th>Number</th>
+                            <th>Amount</th>
+                            <th>Due Date</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.CashInInstallments.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    <select asp-for="CashInInstallments[i].NumberOfInstallment" class="form-control">
+                                        @for (int n = 1; n <= 6; n++)
+                                        {
+                                            @if (Model.CashInInstallments[i].NumberOfInstallment == n)
+                                            {
+                                                <option value="@n" selected>@n</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@n">@n</option>
+                                            }
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    <input asp-for="CashInInstallments[i].Amount" class="form-control" />
+                                </td>
+                                <td>
+                                    <input asp-for="CashInInstallments[i].DueDate" type="date" class="form-control" value="@Model.CashInInstallments[i].DueDate.ToString("yyyy-MM-dd")" />
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-danger btn-sm removeInstallment">Remove</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <button type="button" id="addInstallment" class="btn btn-secondary">Add Installment</button>
+            </div>
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Save" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function () {
+            var maxInstallments = 6;
+            var amountDue = parseFloat($('#AmountDue').val());
+            var cashInDate = new Date($('#Date').val());
+
+            function updateInstallmentNumbers() {
+                $('#installmentsTable tbody tr').each(function (index) {
+                    $(this).find('select[name$=".NumberOfInstallment"]').val(index + 1);
+                });
+            }
+
+            function validateAndUpdateStatus() {
+                var totalAmount = 0;
+                var isValid = true;
+                var sixMonthsBefore = new Date(cashInDate);
+                sixMonthsBefore.setMonth(sixMonthsBefore.getMonth() - 6);
+                var sixMonthsAfter = new Date(cashInDate);
+                sixMonthsAfter.setMonth(sixMonthsAfter.getMonth() + 6);
+                var latestDueDate = new Date(0);
+                var previousDueDate = null;
+
+                $('#installmentsTable tbody tr').each(function () {
+                    var amount = parseFloat($(this).find('input[name$=".Amount"]').val()) || 0;
+                    var dueDate = new Date($(this).find('input[name$=".DueDate"]').val());
+
+                    totalAmount += amount;
+
+                    // Check if due date is within 6 months range
+                    if (dueDate < sixMonthsBefore || dueDate > sixMonthsAfter) {
+                        alert('Installment due date must be within 6 months before or after the CashIn date.');
+                        isValid = false;
+                        return false;
+                    }
+
+                    // Check if installments are in chronological order
+                    if (previousDueDate && dueDate <= previousDueDate) {
+                        alert('Installments must be in chronological order.');
+                        isValid = false;
+                        return false;
+                    }
+                    previousDueDate = dueDate;
+
+                    if (dueDate > latestDueDate) {
+                        latestDueDate = dueDate;
+                    }
+                });
+
+                if (totalAmount > amountDue) {
+                    alert('Sum of installment amounts cannot exceed the total amount due.');
+                    isValid = false;
+                } else if (Math.abs(totalAmount - amountDue) < 0.01) {
+                    if (latestDueDate <= cashInDate) {
+                        $('#Status').val('Received');
+                    } else {
+                        $('#Status').val('Delayed');
+                        $('#DelayedDate').val(latestDueDate.toISOString().split('T')[0]);
+                    }
+                }
+
+                return isValid;
+            }
+
+            $('#AmountDue').on('change', function () {
+                amountDue = parseFloat($(this).val());
+            });
+
+            $('#Date').on('change', function () {
+                cashInDate = new Date($(this).val());
+                validateAndUpdateStatus();
+            });
+
+            $('#addInstallment').click(function () {
+                if ($('#installmentsTable tbody tr').length >= maxInstallments) {
+                    alert('Only six installments are allowed.');
+                    return;
+                }
+
+                var newRowIndex = $('#installmentsTable tbody tr').length;
+                var lastDueDate = cashInDate;
+                if (newRowIndex > 0) {
+                    lastDueDate = new Date($('#installmentsTable tbody tr:last input[name$=".DueDate"]').val());
+                }
+                var newDueDate = new Date(lastDueDate);
+                newDueDate.setDate(newDueDate.getDate() + 1); // Set to the day after the last due date
+
+                var newRow = `
+                    <tr>
+                        <td>
+                            <select name="CashInInstallments[${newRowIndex}].NumberOfInstallment" class="form-control">
+                                ${[1, 2, 3, 4, 5, 6].map(n => `<option value="${n}">${n}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td><input name="CashInInstallments[${newRowIndex}].Amount" type="number" step="0.01" class="form-control" required /></td>
+                        <td><input name="CashInInstallments[${newRowIndex}].DueDate" type="date" class="form-control" value="${newDueDate.toISOString().split('T')[0]}" required /></td>
+                        <td><button type="button" class="btn btn-danger btn-sm removeInstallment">Remove</button></td>
+                    </tr>
+                `;
+                $('#installmentsTable tbody').append(newRow);
+                updateInstallmentNumbers();
+                validateAndUpdateStatus();
+            });
+
+            $('#installmentsTable').on('click', '.removeInstallment', function () {
+                $(this).closest('tr').remove();
+                updateInstallmentNumbers();
+                validateAndUpdateStatus();
+            });
+
+            $('form').on('submit', function (e) {
+                if (!validateAndUpdateStatus()) {
+                    e.preventDefault();
+                }
+            });
+
+            // Run validation and status update when installment amounts or dates change
+            $('#installmentsTable').on('change', 'input[name$=".Amount"], input[name$=".DueDate"]', validateAndUpdateStatus);
+
+            // Initial update of installment numbers and status
+            updateInstallmentNumbers();
+            validateAndUpdateStatus();
+        });
+           
+    </script>
+}

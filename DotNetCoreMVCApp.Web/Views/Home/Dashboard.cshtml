@@ -1,0 +1,480 @@
+﻿@model DotNetCoreMVCApp.Models.Web.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var labels = Model.MonthlyCashFlow.Select(m => m.Date.ToString("MMM yyyy")).ToArray();
+    var cashInData = Model.MonthlyCashFlow.Select(m => m.CashIn.ToString("F2")).ToArray();
+    var cashOutData = Model.MonthlyCashFlow.Select(m => m.CashOut.ToString("F2")).ToArray();
+
+    // Determine the CSS class based on the balance
+    var todayBalanceClass = Model.TodayBalance >= 0 ? "bg-success" : "bg-danger";
+}
+
+<!-- Small boxes (Stat box) -->
+<div class="row">
+    <div class="col-lg-4 col-6">
+        <div class="small-box bg-info">
+            <div class="inner">
+                <h3>@Model.TotalCashIn.ToString("N0")</h3>
+                <p>Total Cash In</p>
+            </div>
+            <div class="icon">
+                <i class="ion ion-cash"></i>
+            </div>
+            <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+    <div class="col-lg-4 col-6">
+        <div class="small-box bg-warning">
+            <div class="inner">
+                <h3>@Model.TotalCashOut.ToString("N0")</h3>
+                <p>Total Cash Out</p>
+            </div>
+            <div class="icon">
+                <i class="ion ion-stats-bars"></i>
+            </div>
+            <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+    <div class="col-lg-4 col-6">
+        <div class="small-box @todayBalanceClass">
+            <div class="inner">
+                <h3>@Model.TodayBalance.ToString("N0")</h3>
+                <p>Today's Balance</p>
+            </div>
+            <div class="icon">
+                <i class="ion ion-pie-graph"></i>
+            </div>
+            <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+        </div>
+    </div>
+</div>
+
+<!-- Main row -->
+<div class="row">
+    <!-- Left col -->
+    <section class="col-lg-7 connectedSortable">
+        <!-- Balance Wave Chart -->
+        <div class="card" style="background-color: #e6f2ff;">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-wave-square mr-1"></i>
+                    Balance Wave
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="chart">
+                    <canvas id="balanceWaveChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Cash Flow Chart -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-project-diagram mr-1"></i>
+                    Project Cash Flow
+                </h3>
+                <div class="card-tools">
+                    <form asp-action="Dashboard" method="get" class="form-inline">
+                        @if (Model.Projects != null && Model.Projects.Any())
+                        {
+                            <select asp-for="SelectedProject" asp-items="@(new SelectList(Model.Projects))" class="form-control mr-2">
+                                <option value="">All Projects</option>
+                            </select>
+                        }
+                        else
+                        {
+                            <select class="form-control mr-2" disabled>
+                                <option>No projects available</option>
+                            </select>
+                        }
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart">
+                    <canvas id="projectCashFlowChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Right col -->
+    <section class="col-lg-5 connectedSortable">
+        <!-- Monthly Cash Flow Chart -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-chart-line mr-1"></i>
+                    Monthly Cash Flow
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="chart">
+                    <canvas id="cashFlowChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cash In and Cash Out Pie Charts -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Cash In by Status</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="cashInPieChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Cash Out by Status</h3>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="cashOutPieChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script>
+        function formatNumber(value) {
+            return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        // Cash Flow Chart
+        var ctxCashFlow = document.getElementById('cashFlowChart').getContext('2d');
+        var cashFlowChart = new Chart(ctxCashFlow, {
+            type: 'line',
+            data: {
+                labels: @Json.Serialize(labels),
+                datasets: [{
+                    label: 'Cash In',
+                    data: @Json.Serialize(cashInData),
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    fill: true
+                },
+                {
+                    label: 'Cash Out',
+                    data: @Json.Serialize(cashOutData),
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return formatNumber(value);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Monthly Cash Flow'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += formatNumber(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Balance Wave Chart
+        var ctxBalanceWave = document.getElementById('balanceWaveChart').getContext('2d');
+        var balanceWaveChart = new Chart(ctxBalanceWave, {
+            type: 'line',
+            data: {
+                labels: @Json.Serialize(Model.CashFlowSummaries.Select(cfs => cfs.Date.ToString("yyyy-MM-dd"))),
+                datasets: [{
+                    label: 'Balance',
+                    data: @Json.Serialize(Model.CashFlowSummaries.Select(cfs => cfs.Balance)),
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: function (context) {
+                        var index = context.dataIndex;
+                        var value = context.dataset.data[index];
+                        return value < 0 ? 'rgba(255, 99, 132, 0.2)' : 'rgba(75, 192, 192, 0.2)';
+                    },
+                    borderColor: function (context) {
+                        var index = context.dataIndex;
+                        var value = context.dataset.data[index];
+                        return value < 0 ? 'rgb(255, 99, 132)' : 'rgb(75, 192, 192)';
+                    },
+                    segment: {
+                        borderColor: function (context) {
+                            if (context.p0.parsed.y < 0 && context.p1.parsed.y < 0) {
+                                return 'rgb(255, 99, 132)';
+                            } else if (context.p0.parsed.y >= 0 && context.p1.parsed.y >= 0) {
+                                return 'rgb(75, 192, 192)';
+                            } else {
+                                return 'rgba(0,0,0,0.2)';
+                            }
+                        }
+                    }
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            displayFormats: {
+                                day: 'MMM dd'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Balance'
+                        },
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return formatNumber(value) ;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Balance Wave Chart'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += formatNumber(context.parsed.y) + ' balance';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Project Cash Flow Chart
+        var ctxProjectCashFlow = document.getElementById('projectCashFlowChart').getContext('2d');
+        var projectCashFlowData = @Json.Serialize(Model.ProjectCashFlowSummaries);
+
+        var cashInData = [];
+        var cashOutData = [];
+
+        projectCashFlowData.forEach(function (d) {
+            var delayedDays = d.DelayedDate ? Math.ceil((new Date(d.DelayedDate) - new Date(d.Date)) / (1000 * 60 * 60 * 24)) : 0;
+
+            cashInData.push({
+                x: delayedDays,
+                y: d.CashIn,
+                project: d.Project,
+                type: 'Cash In'
+            });
+
+            cashOutData.push({
+                x: delayedDays,
+                y: d.CashOut,
+                project: d.Project,
+                type: 'Cash Out'
+            });
+        });
+
+        var projectCashFlowChart = new Chart(ctxProjectCashFlow, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: 'Cash In',
+                        data: cashInData,
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Cash Out',
+                        data: cashOutData,
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: 'Delayed Days'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Amount'
+                        },
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return formatNumber(value);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Project Cash Flow'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var label = context.raw.project + ' (' + context.raw.type + ')';
+                                label += ': ' + formatNumber(context.parsed.y) + ', ' + context.parsed.x + ' days';
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Cash In Pie Chart
+        var ctxCashInPie = document.getElementById('cashInPieChart').getContext('2d');
+        var cashInPieData = @Json.Serialize(Model.CashInPieChartData);
+        var cashInPieChart = new Chart(ctxCashInPie, {
+            type: 'pie',
+            data: {
+                labels: cashInPieData.map(d => d.label),
+                datasets: [{
+                    data: cashInPieData.map(d => d.value),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var label = context.label || '';
+                                var value = context.raw;
+                                var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                var percentage = Math.round((value / total) * 100);
+                                return label + ': ' + value.toLocaleString() + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Cash Out Pie Chart
+        var ctxCashOutPie = document.getElementById('cashOutPieChart').getContext('2d');
+        var cashOutPieData = @Json.Serialize(Model.CashOutPieChartData);
+        var cashOutPieChart = new Chart(ctxCashOutPie, {
+            type: 'pie',
+            data: {
+                labels: cashOutPieData.map(d => d.label),
+                datasets: [{
+                    data: cashOutPieData.map(d => d.value),
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var label = context.label || '';
+                                var value = context.raw;
+                                var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                var percentage = Math.round((value / total) * 100);
+                                return label + ': ' + value.toLocaleString() + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}

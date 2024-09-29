@@ -1,0 +1,193 @@
+﻿@using DotNetCoreMVCApp.Extensions
+@model IEnumerable<DotNetCoreMVCApp.Models.Entities.CashFlowSummary>
+
+@{
+    ViewData["Title"] = "Cash Flow Summary";
+}
+<link href="~/datatables/css/jquery.dataTables.css" rel="stylesheet" />
+<link href="~/datatables/css/jquery.dataTables.min.css" rel="stylesheet" />
+<style>
+    .report-header {
+        background-color: lightsteelblue;
+        padding: 15px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .report-title {
+        color: #ff6600;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    #cashFlowTable th {
+        background-color: lightsteelblue;
+    }
+
+    .today-row {
+        background-color: #fffacd !important; /* Light yellow */
+        font-weight: bold;
+    }
+</style>
+<div class="container-fluid">
+    <div class="card-header">
+        <a asp-action="Export" class="btn btn-primary">Export</a>
+    </div>
+</div>
+<div class="card-header">
+    <form asp-action="Index" method="get" id="dateFilterForm">
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="startDate">Start Date:</label>
+                <input type="date" id="startDate" name="startDate" value="@ViewBag.StartDate" class="form-control" />
+            </div>
+            <div class="form-group col-md-4">
+                <label for="endDate">End Date:</label>
+                <input type="date" id="endDate" name="endDate" value="@ViewBag.EndDate" class="form-control" />
+            </div>
+            <div class="form-group col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary mr-2">Apply Filter</button>
+                <button type="button" id="clearFilter" class="btn btn-secondary">Clear Filter</button>
+            </div>
+        </div>
+    </form>
+</div>
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-12">
+                <div class="report-header">
+                    <h1 class="report-title">CashFlow Management Summary Report</h1>
+                </div>
+            </div>
+        </div>
+    </div><!-- /.container-fluid -->
+</section>
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <!-- /.card-header -->
+                    <div class="card-body">
+                        <table id="cashFlowTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Cash In</th>
+                                    <th>Cash Out</th>
+                                    <th>Balance</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>@item.Date.ToString("MMM dd, yyyy")</td>
+                                        <td>@item.CashIn.ToFormattedString()</td>
+                                        <td>@item.CashOut.ToFormattedString()</td>
+                                        <td>@item.Balance.ToFormattedString()</td>
+                                        <td>
+                                            <a asp-action="Details" asp-route-date="@item.Date.ToString("yyyy-MM-dd")" class="btn btn-sm btn-info">Details</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- /.card-body -->
+                </div>
+                <!-- /.card -->
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/datatables/js/jquery.dataTables.js"></script>
+    <script src="~/datatables/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var table = $('#cashFlowTable').DataTable({
+                "paging": true,
+                "lengthChange": true,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+                "language": {
+                    "emptyTable": "No data available"
+                },
+                "lengthMenu": [[50, 100, 200, -1], [50, 100, 200, "All"]],
+                "pageLength": 50,
+                "order": [[0, "desc"]], // Order by the first column (Date) in descending order
+                "columnDefs": [
+                    {
+                        "targets": 0, // Target the first column
+                        "type": "date" // Specify the type as date
+                    }
+                ],
+                "drawCallback": function (settings) {
+                    var api = this.api();
+                    var today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
+                    // Find the index of today's date
+                    var todayIndex = api.column(0).data().indexOf(today.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }));
+
+                    if (todayIndex !== -1) {
+                        // Scroll to today's date
+                        var scrollBody = $(api.table().node()).parent();
+                        var rowPos = $(api.row(todayIndex).node()).position();
+                        scrollBody.scrollTop(rowPos.top);
+
+                        // Highlight today's row
+                        $(api.row(todayIndex).node()).addClass('today-row');
+                    }
+                },
+                "createdRow": function (row, data, dataIndex) {
+                    var today = new Date();
+                    var rowDate = new Date(data[0]);
+                    if (rowDate.toDateString() === today.toDateString()) {
+                        $(row).addClass('today-row');
+                    }
+                }
+            });
+
+            // Custom range filtering function
+            $.fn.dataTable.ext.search.push(
+                function (settings, data, dataIndex) {
+                    var min = new Date($('#startDate').val());
+                    var max = new Date($('#endDate').val());
+                    var date = new Date(data[0]);
+
+                    if (
+                        (isNaN(min) && isNaN(max)) ||
+                        (isNaN(min) && date <= max) ||
+                        (min <= date && isNaN(max)) ||
+                        (min <= date && date <= max)
+                    ) {
+                        return true;
+                    }
+                    return false;
+                }
+            );
+
+            // Event listener to the two range filtering inputs to redraw on input
+            $('#startDate, #endDate').change(function () {
+                table.draw();
+            });
+
+            $('#clearFilter').click(function (e) {
+                e.preventDefault();
+                $('#startDate, #endDate').val('');
+                table.draw();
+            });
+        });
+    </script>
+}

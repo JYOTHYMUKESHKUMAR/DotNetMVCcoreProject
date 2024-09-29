@@ -1,0 +1,121 @@
+﻿@model IEnumerable<DotNetCoreMVCApp.Models.Web.ProjectDatabaseViewModel>
+
+@{
+    ViewData["Title"] = "Manage Project Database";
+}
+<link href="~/datatables/css/jquery.dataTables.css" rel="stylesheet" />
+<link href="~/datatables/css/jquery.dataTables.min.css" rel="stylesheet" />
+<style>
+    .report-header {
+        background-color: lightsteelblue;
+        padding: 15px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .report-title {
+        color: #ff6600;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    #projectDatabaseTable th {
+        background-color: lightsteelblue;
+    }
+
+    .alert-success-green {
+        color: #ffffff;
+        background-color: #28a745;
+        border-color: #23923d;
+        padding: .75rem 1.25rem;
+        margin-bottom: 1rem;
+        border: 1px solid transparent;
+        border-radius: .25rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="card-header">
+        <a asp-action="Create" class="btn btn-primary">Add New Project</a>
+    </div>
+</div>
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-12">
+                <div class="report-header">
+                    <h1 class="report-title">Project Database Management</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success-green">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <table id="projectDatabaseTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Id</th>
+                                    <th>Project Name</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>@Html.DisplayFor(modelItem => item.Id)</td>
+                                        <td>@Html.DisplayFor(modelItem => item.ProjectName)</td>
+                                        <td>
+                                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-secondary">Edit</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/datatables/js/jquery.dataTables.js"></script>
+    <script src="~/datatables/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#projectDatabaseTable').DataTable({
+                "paging": true,
+                "lengthChange": true,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+                "language": {
+                    "emptyTable": "No data available"
+                }
+            });
+
+            // Fade out success message after 5 seconds
+            setTimeout(function () {
+                $(".alert-success-green").fadeOut("slow");
+            }, 5000);
+        });
+    </script>
+}

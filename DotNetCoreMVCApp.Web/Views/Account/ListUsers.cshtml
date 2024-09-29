@@ -1,0 +1,43 @@
+﻿@using Microsoft.AspNetCore.Identity;
+@using DotNetCoreMVCApp.Models.Entities
+
+@model IEnumerable<ApplicationUser>
+
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.UserName)
+            </th>
+            
+            <th>
+                @Html.DisplayNameFor(model => model.Email)
+            </th>
+            
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.UserName)
+                </td>
+                
+                <td>
+                    @Html.DisplayFor(modelItem => item.Email)
+                </td>
+                
+                <td>
+                    <a asp-action="AddRemoveRoles" class="btn btn-primary" asp-controller="Administrative" asp-route-id="@item.Id">AddRemoveRoles</a>
+                    <a asp-action="ManageUserClaims" class="btn btn-primary" asp-controller="Administrative" asp-route-id="@item.Id">UserClaims</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

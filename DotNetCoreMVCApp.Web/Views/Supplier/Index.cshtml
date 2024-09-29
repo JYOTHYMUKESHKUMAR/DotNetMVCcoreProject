@@ -1,0 +1,178 @@
+﻿@using DotNetCoreMVCApp.Models.Repository
+@model IEnumerable<Supplier>
+
+@{
+    ViewData["Title"] = "Manage Supplier";
+}
+<link href="~/datatables/css/jquery.dataTables.css" rel="stylesheet" />
+<link href="~/datatables/css/jquery.dataTables.min.css" rel="stylesheet" />
+<style>
+    .report-header {
+        background-color: lightsteelblue;
+        padding: 15px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .report-title {
+        color: #ff6600;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    #supplierTable th {
+        background-color: lightsteelblue;
+    }
+    /* Add the CSS for the green success message */
+    .alert-success-green {
+        color: #ffffff;
+        background-color: #28a745;
+        border-color: #23923d;
+        padding: .75rem 1.25rem;
+        margin-bottom: 1rem;
+        border: 1px solid transparent;
+        border-radius: .25rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+</style>
+<div class="container-fluid">
+    <div class="card-header">
+        <a asp-action="Create" class="btn btn-primary">Add New Supplier</a>
+        
+    </div>
+</div>
+
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-12">
+                <div class="report-header">
+                    <h1 class="report-title"> Supplier Database Management </h1>
+                </div>
+            </div>
+        </div>
+    </div><!-- /.container-fluid -->
+</section>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success-green">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<!-- Main content -->
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    
+                    <!-- /.card-header -->
+                    <div class="card-body">
+                        <table id="supplierTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Bank Name</th>
+                                    <th>Branch</th>
+                                    <th>Account Holder Name</th>
+                                    <th>Account Number</th>
+                                    <th>IBAN</th>
+                                    <th>Swift Code</th>
+                                    <th>Contact Names</th>
+                                    <th>Emails</th>
+                                    <th>Phone Numbers</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var supplier in Model)
+                                {
+                                    <tr>
+                                        <td>@supplier.Id</td>
+                                        <td>@supplier.Name</td>
+                                        <td>@supplier.BankName</td>
+                                        <td>@supplier.Branch</td>
+                                        <td>@supplier.AccountHolderName</td>
+                                        <td>@supplier.AccountNumber</td>
+                                        <td>@supplier.IBAN</td>
+                                        <td>@supplier.SwiftCode</td>
+                                        
+                                        <td>
+                                            @Html.Raw(string.Join("<br>", supplier.SupplierContacts.Select(c => c.ContactName)))
+                                        </td>
+                                        <td>
+                                            @Html.Raw(string.Join("<br>", supplier.SupplierContacts.Select(c => c.Email)))
+                                        </td>
+                                        <td>
+                                            @Html.Raw(string.Join("<br>", supplier.SupplierContacts.Select(c => c.Mobile)))
+                                        </td>
+                                        <td>
+                                            <a asp-action="Edit" asp-route-id="@supplier.Id" class="btn btn-sm btn-primary">Edit</a>
+                                            
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- /.card-body -->
+                </div>
+                <!-- /.card -->
+            </div>
+        </div>
+    </div>
+
+    <!-- delete modal -->
+    <div class="modal fade" id="modal-delete">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Delete Supplier</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to remove supplier: <span id="selectedSupplierNameLbl"></span>?</p>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger btn-delete">Delete</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!-- delete modal -->
+</section>
+
+@section Scripts {
+    <script src="~/datatables/js/jquery.dataTables.js"></script>
+    <script src="~/datatables/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#supplierTable').DataTable({
+                "paging": true,
+                "lengthChange": true,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "responsive": true,
+                "language": {
+                    "emptyTable": "No data available"
+                }
+              
+            });
+            // Fade out success message after 5 seconds
+            setTimeout(function () {
+                $(".alert-success-green").fadeOut("slow");
+            }, 5000);
+        });
+    </script>
+}

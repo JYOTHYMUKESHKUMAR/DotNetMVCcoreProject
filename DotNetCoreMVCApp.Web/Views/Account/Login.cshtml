@@ -1,0 +1,66 @@
+﻿@model UserViewModel
+@{
+    ViewData["Title"] = "Log in";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - EFI Cash Flow Management System</title>
+    <link rel="stylesheet" href="~/css/login.css" />
+</head>
+<body>
+    <div class="container">
+        <div class="left-side">
+            <img src="/images/b3.jpg" alt="Hovering Cash Flow Icon" class="hovering-image">
+            <div class="left-side-content">
+                <div class="logo-background">
+                    <img src="~/dist/img/efilogo.jpg" alt="EFI Logo" class="left-side-logo">
+                </div>
+                <h1>EFI Cash Flow Management System</h1>
+                <p>EXCELLENCE FACTORS INTERNATIONAL (EFI), a leading IT and business consultancy firm based in Qatar since 2014. Our software is designed to streamline cashflow processes, empowering businesses to efficiently manage their financial operations. Whether you're a small startup or a large corporation, EFI is dedicated to providing cutting-edge solutions to optimize your financial management. Streamline your financial operations with our advanced cash flow management solution. Gain real-time insights, optimize your cash flow, and make informed decisions to drive your business forward.</p>
+            </div>
+        </div>
+        <!-- Rest of your content -->
+
+
+        <div class="right-side">
+            <div class="login-form">
+                <div class="logo-container">
+                    <img src="~/dist/img/efilogo.png" alt="EFI Logo" class="logo">
+                </div>
+                <h2>Sign in to your account</h2>
+                <form asp-route-returnurl="@ViewData["ReturnUrl"]" method="post">
+                    <div class="form-group">
+                        <label asp-for="UserName">Email</label>
+                        <input asp-for="UserName" type="text" class="form-control" />
+                        <span asp-validation-for="UserName" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Password">Password</label>
+                        <input asp-for="Password" type="password" class="form-control" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox">
+                            <label asp-for="RememberMe">
+                                <input asp-for="RememberMe" />
+                                @Html.DisplayNameFor(m => m.RememberMe)
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit">Sign In</button>
+                </form>
+                @* <div class="forgot-password">
+                <a asp-action="ForgotPassw">Forgot your password?</a>
+                </div> *@
+            </div>
+        </div>
+    </div>
+    @section Scripts {
+        @await Html.PartialAsync("_ValidationScriptsPartial")
+    }
+</body>
+</html>
